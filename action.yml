@@ -75,12 +75,12 @@ runs:
         done
       shell: bash
 
-    # store the build
-    - name: store the build
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ env.artifact_name }}
-        path: ${{ inputs.build-location }}
+    ## store the build
+    #- name: store the build
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: ${{ env.artifact_name }}
+    #    path: ${{ inputs.build-location }}
 
     # create release of current build
     - name: create release of current build
