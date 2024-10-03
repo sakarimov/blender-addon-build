@@ -1,90 +1,90 @@
-name: 'Blender Addon Build'
-description: 'Action to automatically build the Blender add-on and store the resulting .zip artifact.'
-author: 'Andreas Gajdosik, BlenderKit'
+name: 'blender addon build'
+description: 'action to automatically build the blender add-on and store the resulting .zip artifact.'
+author: 'andreas gajdosik, blenderkit'
 branding:
   icon: 'box'
   color: 'orange'
 inputs:
   name:
-    description: 'Name of the add-on. Used for the name of the build. If left empty, repository name will be used automatically.'
+    description: 'name of the add-on. used for the name of the build. if left empty, repository name will be used automatically.'
     default: ''
   name-suffix:
-    description: 'Name suffix. None (name.zip), commit hash (name-abc123.zip), PR number with datetime (name-PR123-date_time.zip).'
-    choices: [ 'none', 'commit-hash', 'PR-time']
+    description: 'name suffix. none (name.zip), commit hash (name-abc123.zip), pr number with datetime (name-pr123-date_time.zip).'
+    choices: [ 'none', 'commit-hash', 'pr-time']
     default: 'none'
   build-command:
-    description: 'Command to build the add-on.'
+    description: 'command to build the add-on.'
     default: ''
   build-location:
-    description: 'Path to directory, which will be zipped.'
+    description: 'path to directory, which will be zipped.'
     default: './'
   do-checkout:
-    decsription: 'Should the action checkout the repository?'
+    decsription: 'should the action checkout the repository?'
     choices: [ 'true', 'false' ]
     default: 'true'
   exclude-files:
-    description: 'List of file paths (relative to build-location) to exclude from the build. Use semicolon as separator e.g. "file1;dir/file2;dir2/file3".'
+    description: 'list of file paths (relative to build-location) to exclude from the build. use semicolon as separator e.g. "file1;dir/file2;dir2/file3".'
     default: '.git'
 runs:
   using: "composite"
   steps:
-    - name: Checkout Repository
+    - name: checkout repository
       if: ${{ inputs.do-checkout == 'true' }}
       uses: actions/checkout@v3
     - name: get-date
-      run: echo "date=$(date +'%Y-%m-%d--%H-%M-%S')" >> $GITHUB_ENV
+      run: echo "date=$(date +'%y-%m-%d--%h-%m-%s')" >> $github_env
       shell: bash
 
-    # PREPARE NAME
-    - name: Use name from input
+    # prepare name
+    - name: use name from input
       if: ${{ inputs.name != '' }}
-      run: echo "artifact_name=${{ inputs.name }}" >> $GITHUB_ENV
+      run: echo "artifact_name=${{ inputs.name }}" >> $github_env
       shell: bash
-    - name: Use repository name
+    - name: use repository name
       if: ${{ inputs.name == '' }}  
-      run: echo "artifact_name=${{ github.event.repository.name }}" >> $GITHUB_ENV
+      run: echo "artifact_name=${{ github.event.repository.name }}" >> $github_env
       shell: bash
 
-    # PREPARE NAME SUFFIXES
-    - name: Prepare artifact name without suffix
+    # prepare name suffixes
+    - name: prepare artifact name without suffix
       if: ${{ inputs.name-suffix == 'none' }}
-      run: echo "artifact_name=${{ env.artifact_name }}" >> $GITHUB_ENV
+      run: echo "artifact_name=${{ env.artifact_name }}" >> $github_env
       shell: bash
-    - name: Prepare artifact name with PR-time suffix
-      if: ${{ inputs.name-suffix == 'PR-time' }}
-      run: echo "artifact_name=${{ env.artifact_name }}-PR${{ github.event.number }}-${{ env.date }}" >> $GITHUB_ENV
+    - name: prepare artifact name with pr-time suffix
+      if: ${{ inputs.name-suffix == 'pr-time' }}
+      run: echo "artifact_name=${{ env.artifact_name }}-pr${{ github.event.number }}-${{ env.date }}" >> $github_env
       shell: bash
-    - name: Prepare artifact name with commit-hash suffix
+    - name: prepare artifact name with commit-hash suffix
       if: ${{ inputs.name-suffix == 'commit-hash' }}
-      run: echo "artifact_name=${{ env.artifact_name }}-${{ github.sha }}" >> $GITHUB_ENV
+      run: echo "artifact_name=${{ env.artifact_name }}-${{ github.sha }}" >> $github_env
       shell: bash
 
-    # BUILD IF PROVIDED
-    - name: Build the add-on
+    # build if provided
+    - name: build the add-on
       if: ${{ inputs.build-command != '' }}
       run: |
         ${{ inputs.build-command }}
       shell: bash
 
-    # REMOVE EXCLUDED FILES
-    - name: Remove excluded files
+    # remove excluded files
+    - name: remove excluded files
       run: |
-        IFS=';' read -ra FILE_ARRAY <<< "${{ inputs.exclude-files }}"
-        for file in "${FILE_ARRAY[@]}"; do
+        ifs=';' read -ra file_array <<< "${{ inputs.exclude-files }}"
+        for file in "${file_array[@]}"; do
           rm -rf .//$file
         done
       shell: bash
 
-    # STORE THE BUILD
-    #- name: Store the build
-    #  uses: actions/upload-artifact@v3
-    #  with:
-    #    name: ${{ env.artifact_name }}
-    #    path: ${{ inputs.build-location }}
-    - name: Upload release binaries
-      uses: sakarimov/upload-assets@main
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+    # store the build
+    - name: store the build
+      uses: actions/upload-artifact@v3
       with:
-        asset_paths: '[${{ inputs.build-location }}]'
         name: ${{ env.artifact_name }}
+        path: ${{ inputs.build-location }}
+
+    # create release of current build
+    - name: create release of current build
+      uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ inputs.build-location }}
+
