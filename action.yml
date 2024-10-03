@@ -76,8 +76,15 @@ runs:
       shell: bash
 
     # STORE THE BUILD
-    - name: Store the build
-      uses: actions/upload-artifact@v3
+    #- name: Store the build
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: ${{ env.artifact_name }}
+    #    path: ${{ inputs.build-location }}
+    - name: Upload release binaries
+      uses: alexellis/upload-assets@0.4.0
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       with:
+        asset_paths: '[${{ inputs.build-location }}]'
         name: ${{ env.artifact_name }}
-        path: ${{ inputs.build-location }}
