@@ -82,7 +82,7 @@ runs:
     #    name: ${{ env.artifact_name }}
     #    path: ${{ inputs.build-location }}
     - name: Upload release binaries
-      uses: sakarimov/upload-assets@0.4.0
+      uses: sakarimov/upload-assets@main
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
